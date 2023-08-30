@@ -1,0 +1,1 @@
+invoke-sqlcmd -inputfile "<file-location>"
