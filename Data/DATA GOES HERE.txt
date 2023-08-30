@@ -1,0 +1,3 @@
+In accordance with NDA, data is not provided.
+
+This model is provided "code only" alongside regression coefficients. As with the previous work we build from, we invite external researchers to request access to the data via formal research ethics approval.
