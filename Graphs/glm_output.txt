@@ -1,0 +1,170 @@
+> source("C:/Users/nb22837/Desktop/Emma_Tarmey_ICCA/R/VasospasmGLMModel.R", echo=TRUE)
+
+> # ICCA Database Project
+> # Building More Flexible Binary GLM Predictive Model for Vasospasm
+> # This document demonstrates using previously constru .... [TRUNCATED] 
+
+> library(tidyverse)
+
+> library(varhandle)
+
+> # ----- Importing Data -----
+> 
+> pt.data    <- read.csv("../Data/PtDataSummary.csv")
+
+> pt.data$y  <- as.factor(pt.data$y)
+
+> pt.data    <- (pt.data %>% drop_na()) # necessary
+
+> pt.data$id <- c(1:nrow(pt.data))
+
+> #pt.data %>% head() %>% knitr::kable()
+> 
+> # sanity check for occurrences
+> pt.data$y %>% unfactor() %>% sum()
+[1] 113
+
+> nrow(pt.data)
+[1] 2641
+
+> # NOTE: vasospasm incidences are rare in the data
+> # As a result, generating a valid sample (proportional incidence) can be tricky
+> # Hence dplyr  .... [TRUNCATED] 
+
+> pt.data.train <- pt.data       %>% dplyr::sample_frac(0.80)
+
+> pt.data.test  <- pt.data       %>% dplyr::anti_join(pt.data.train, by = "id")
+
+> # remove unnecessary columns
+> pt.data.train <- pt.data.train %>% subset(.,  select = -c(id) )
+
+> pt.data.test  <- pt.data.test  %>% subset(., select = -c(id))
+
+> # sanity check
+> # sum(pt.data.train$y) + sum(pt.data.test$y) = sum(pt.data$y)
+> pt.data.train$y %>% unfactor() %>% sum()
+[1] 85
+
+> pt.data.test$y  %>% unfactor() %>% sum()
+[1] 28
+
+> # ----- Building Model -----
+> 
+> vaso.model <- glm(formula = y ~ .,
++                   data    = pt.data.train,
++                   family  = bino .... [TRUNCATED] 
+
+> summary(vaso.model)
+
+Call:
+glm(formula = y ~ ., family = binomial, data = pt.data.train)
+
+Coefficients:
+             Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -6.746514   1.014751  -6.648 2.96e-11 ***
+x.1          0.054121   0.008109   6.674 2.49e-11 ***
+x.2         -0.012859   0.016240  -0.792 0.428458    
+x.3         -0.035834   0.010223  -3.505 0.000456 ***
+x.4          0.056399   0.028551   1.975 0.048228 *  
+x.5.1        0.338983   0.263347   1.287 0.198021    
+x.5.2        0.962872   0.250623   3.842 0.000122 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 712.78  on 2112  degrees of freedom
+Residual deviance: 613.60  on 2106  degrees of freedom
+AIC: 627.6
+
+Number of Fisher Scoring iterations: 7
+
+
+> summary(vaso.model)$coefficients
+               Estimate  Std. Error    z value     Pr(>|z|)
+(Intercept) -6.74651360 1.014751039 -6.6484422 2.962113e-11
+x.1          0.05412080 0.008109142  6.6740483 2.488417e-11
+x.2         -0.01285921 0.016239818 -0.7918325 4.284584e-01
+x.3         -0.03583403 0.010223236 -3.5051557 4.563404e-04
+x.4          0.05639904 0.028551302  1.9753579 4.822755e-02
+x.5.1        0.33898299 0.263346827  1.2872112 1.980207e-01
+x.5.2        0.96287202 0.250623387  3.8419081 1.220816e-04
+
+> # ----- Testing and Making Predictions -----
+> 
+> # Predictions
+> # NOTE: one does not need to remove response column "y", such is handled inside "p ..." ... [TRUNCATED] 
+
+> #pt.data.test %>% head() %>% knitr::kable()
+> 
+> # Error
+> sum(abs( unfactor(pt.data.test$y) - pt.data.test$pred.y ))
+[1] 43.69866
+
+> # ----- Visualising Model -----
+> 
+> png("../Graphs/glm_results_bp_mean.png")
+
+> plot( unfactor(y) ~ x.1, data = pt.data.test[order(pt.data.test$x.1), ], 
++       xlab = "Blood Pressure (Mean)", ylab = "Vasospasm Incidence", main .... [TRUNCATED] 
+
+> lines(     pred.y ~ x.1, data = pt.data.test[order(pt.data.test$x.1), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/glm_results_bp_std.png")
+
+> plot( unfactor(y) ~ x.2, data = pt.data.test[order(pt.data.test$x.2), ], 
++       xlab = "Blood Pressure (Std Deviation)", ylab = "Vasospasm Inciden ..." ... [TRUNCATED] 
+
+> lines(     pred.y ~ x.2, data = pt.data.test[order(pt.data.test$x.2), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/glm_results_hr_mean.png")
+
+> plot( unfactor(y) ~ x.3, data = pt.data.test[order(pt.data.test$x.3), ], 
++       xlab = "Heart Rate (Mean)", ylab = "Vasospasm Incidence", main = " ..." ... [TRUNCATED] 
+
+> lines(     pred.y ~ x.3, data = pt.data.test[order(pt.data.test$x.3), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/glm_results_hr_std.png")
+
+> plot( unfactor(y) ~ x.4, data = pt.data.test[order(pt.data.test$x.4), ], 
++       xlab = "Heart Rate (Std Deviation)", ylab = "Vasospasm Incidence", .... [TRUNCATED] 
+
+> lines(     pred.y ~ x.4, data = pt.data.test[order(pt.data.test$x.4), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/glm_results_nora.png")
+
+> plot( unfactor(y) ~ x.5.1, data = pt.data.test[order(pt.data.test$x.5.1), ], 
++       xlab = "Noradrenaline Administered", ylab = "Vasospasm Inciden ..." ... [TRUNCATED] 
+
+> lines(     pred.y ~ x.5.1, data = pt.data.test[order(pt.data.test$x.5.1), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/glm_results_meta.png")
+
+> plot( unfactor(y) ~ x.5.2, data = pt.data.test[order(pt.data.test$x.5.2), ], 
++       xlab = "Metaraminol Administered", ylab = "Vasospasm Incidence ..." ... [TRUNCATED] 
+
+> lines(     pred.y ~ x.5.2, data = pt.data.test[order(pt.data.test$x.5.2), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 

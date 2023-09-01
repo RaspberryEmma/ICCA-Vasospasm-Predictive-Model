@@ -1,0 +1,179 @@
+> source("C:/Users/nb22837/Desktop/Emma_Tarmey_ICCA/R/VasospasmLogisticModel.R", echo=TRUE)
+
+> # ICCA Database Project
+> # Building Strict Logistic Regression Predictive Model for Vasospasm
+> # This document demonstrates using previously const .... [TRUNCATED] 
+
+> library(readr)
+
+> library(tidymodels)
+
+> library(tidyverse)
+
+> library(varhandle)
+
+> # ----- Importing Data -----
+> 
+> pt.data    <- read.csv("../Data/PtDataSummary.csv")
+
+> pt.data$y  <- as.factor(pt.data$y)
+
+> pt.data    <- (pt.data %>% drop_na()) # necessary
+
+> pt.data$id <- c(1:nrow(pt.data))
+
+> #pt.data %>% head() %>% knitr::kable()
+> 
+> # sanity check for occurrences
+> pt.data$y %>% unfactor() %>% sum()
+[1] 113
+
+> nrow(pt.data)
+[1] 2641
+
+> # NOTE: vasospasm incidences are rare in the data
+> # As a result, generating a valid sample (proportional incidence) can be tricky
+> # Hence dplyr  .... [TRUNCATED] 
+
+> pt.data.train <- pt.data       %>% dplyr::sample_frac(0.80)
+
+> pt.data.test  <- pt.data       %>% dplyr::anti_join(pt.data.train, by = "id")
+
+> # remove unnecessary columns
+> pt.data.train <- pt.data.train %>% subset(.,  select = -c(id) )
+
+> pt.data.test  <- pt.data.test  %>% subset(., select = -c(id))
+
+> # sanity check
+> # sum(pt.data.train$y) + sum(pt.data.test$y) = sum(pt.data$y)
+> pt.data.train$y %>% unfactor() %>% sum()
+[1] 85
+
+> pt.data.test$y  %>% unfactor() %>% sum()
+[1] 28
+
+> # ----- Building Model -----
+> 
+> vaso.model <- logistic_reg(
++   mode    = "classification",
++   engine  = "glm",
++   mixture = tune(),
++   penalty .... [TRUNCATED] 
+
+> vaso.model <- fit(vaso.model, y ~ ., data = pt.data.train)
+
+> vaso.model
+parsnip model object
+
+
+Call:  stats::glm(formula = y ~ ., family = stats::binomial, data = data)
+
+Coefficients:
+(Intercept)          x.1          x.2          x.3          x.4        x.5.1        x.5.2  
+   -6.74651      0.05412     -0.01286     -0.03583      0.05640      0.33898      0.96287  
+
+Degrees of Freedom: 2112 Total (i.e. Null);  2106 Residual
+Null Deviance:	    712.8 
+Residual Deviance: 613.6 	AIC: 627.6
+
+> # ----- Testing and Making Predictions -----
+> 
+> # Predictions
+> # NOTE: one does not need to remove response column "y", such is handled inside "p ..." ... [TRUNCATED] 
+
+> summary(pred_class)
+ .pred_class
+ 0:528      
+ 1:  0      
+
+> pred_prob <- predict(vaso.model,
++                        new_data = pt.data.test,
++                        type = "prob")
+
+> summary(pred_prob)
+    .pred_0          .pred_1         
+ Min.   :0.5049   Min.   :0.0006331  
+ 1st Qu.:0.9578   1st Qu.:0.0122915  
+ Median :0.9773   Median :0.0226711  
+ Mean   :0.9626   Mean   :0.0374029  
+ 3rd Qu.:0.9877   3rd Qu.:0.0422289  
+ Max.   :0.9994   Max.   :0.4951337  
+
+> results <- pt.data.test %>%
++            select(y) %>%
++            bind_cols(pred_class, pred_prob)
+
+> # Accuracy
+> accuracy(results, truth = y, estimate = .pred_class)
+# A tibble: 1 × 3
+  .metric  .estimator .estimate
+  <chr>    <chr>          <dbl>
+1 accuracy binary         0.947
+
+> # ----- Visualising Model -----
+> 
+> png("../Graphs/log_reg_results_bp_mean.png")
+
+> plot( unfactor(y)                              ~ x.1, data = pt.data.test[order(pt.data.test$x.1), ], 
++       xlab = "Blood Pressure (Mean)", ylab  .... [TRUNCATED] 
+
+> lines( unfactor(pull(pred_class, .pred_class)) ~ x.1, data = pt.data.test[order(pt.data.test$x.1), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/log_reg_results_bp_std.png")
+
+> plot( unfactor(y)                              ~ x.2, data = pt.data.test[order(pt.data.test$x.2), ], 
++       xlab = "Blood Pressure (Std Devation) ..." ... [TRUNCATED] 
+
+> lines( unfactor(pull(pred_class, .pred_class)) ~ x.2, data = pt.data.test[order(pt.data.test$x.2), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/log_reg_results_hr_mean.png")
+
+> plot( unfactor(y)                              ~ x.3, data = pt.data.test[order(pt.data.test$x.3), ], 
++       xlab = "Heart Rate (Mean)", ylab = "V ..." ... [TRUNCATED] 
+
+> lines( unfactor(pull(pred_class, .pred_class)) ~ x.3, data = pt.data.test[order(pt.data.test$x.3), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/log_reg_results_hr_std.png")
+
+> plot( unfactor(y)                              ~ x.4, data = pt.data.test[order(pt.data.test$x.4), ], 
++       xlab = "Heart Rate (Mean)", ylab = "V ..." ... [TRUNCATED] 
+
+> lines( unfactor(pull(pred_class, .pred_class)) ~ x.4, data = pt.data.test[order(pt.data.test$x.4), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/log_reg_results_nora.png")
+
+> plot( unfactor(y)                              ~ x.5.1, data = pt.data.test[order(pt.data.test$x.5.1), ], 
++       xlab = "Noradrenaline Administere ..." ... [TRUNCATED] 
+
+> lines( unfactor(pull(pred_class, .pred_class)) ~ x.5.1, data = pt.data.test[order(pt.data.test$x.5.1), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
+
+> png("../Graphs/log_reg_results_meta.png")
+
+> plot( unfactor(y)                              ~ x.5.2, data = pt.data.test[order(pt.data.test$x.5.2), ], 
++       xlab = "Metaraminol Administered" .... [TRUNCATED] 
+
+> lines( unfactor(pull(pred_class, .pred_class)) ~ x.5.2, data = pt.data.test[order(pt.data.test$x.5.2), ], lwd = 2, col = "green")
+
+> dev.off()
+RStudioGD 
+        2 
